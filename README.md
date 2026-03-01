@@ -1,8 +1,6 @@
 # OpenClaw Cron Scheduler
 
 [![CI](https://github.com/Fourier7754/openclaw-cron-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/Fourier7754/openclaw-cron-scheduler/actions/workflows/ci.yml)
-[![PyPI version](https://badge.fury.io/py/openclaw-cron-scheduler.svg)](https://badge.fury.io/py/openclaw-cron-scheduler)
-[![Python versions](https://img.shields.io/pypi/pyversions/openclaw-cron-scheduler.svg)](https://pypi.org/project/openclaw-cron-scheduler/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An intelligent cron task scheduler for OpenClaw that handles rate limiting through queue-based serial execution of concurrent tasks.
@@ -21,8 +19,18 @@ When multiple cron tasks trigger simultaneously in OpenClaw, concurrent API requ
 
 ## Installation
 
+### Option 1: Install from GitHub (recommended)
+
 ```bash
-pip install openclaw-cron-scheduler
+pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
+```
+
+### Option 2: Clone and install in editable mode
+
+```bash
+git clone https://github.com/Fourier7754/openclaw-cron-scheduler.git
+cd openclaw-cron-scheduler
+pip install -e .
 ```
 
 ## Quick Start
@@ -171,8 +179,8 @@ For easy deployment on multiple servers:
 #!/bin/bash
 # install-scheduler.sh
 
-# Install the package
-pip install openclaw-cron-scheduler
+# Install the package from GitHub
+pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
 
 # Initialize configuration
 openclaw-scheduler init
@@ -213,13 +221,6 @@ pytest
 
 # Run with coverage
 pytest --cov=openclaw_cron_scheduler
-```
-
-### Building the Package
-
-```bash
-pip install build
-python -m build
 ```
 
 ## License

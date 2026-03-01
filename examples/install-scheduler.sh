@@ -21,9 +21,9 @@ if command -v pip3 &> /dev/null; then
     PIP_CMD="pip3"
 fi
 
-# Install the package
+# Install the package from GitHub
 echo "1. Installing openclaw-cron-scheduler..."
-$PIP_CMD install openclaw-cron-scheduler
+$PIP_CMD install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
 
 # Initialize configuration
 echo ""
