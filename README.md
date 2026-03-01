@@ -35,7 +35,7 @@ pip install -e .
 
 ## Quick Start
 
-### 1. Install and initialize
+### 1. Install and create the compatibility wrapper
 
 ```bash
 # Install from GitHub
@@ -43,31 +43,66 @@ pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
 
 # Initialize the scheduler
 openclaw-scheduler init
-```
 
-This creates the directory structure and default configuration at `~/.openclaw/scheduler.yaml`.
+# Create the compatibility wrapper
+mkdir -p ~/.openclaw/scripts
+cat > ~/.openclaw/scripts/cron_scheduler.py <<'WRAPPER'
+#!/usr/bin/env python3
+import sys
+import subprocess
+
+if len(sys.argv) < 3:
+    sys.exit(1)
+
+task_id = sys.argv[1]
+command = sys.argv[2]
+
+result = subprocess.run(
+    ["openclaw-scheduler", "run", task_id, command],
+    capture_output=True
+)
+sys.exit(result.returncode)
+WRAPPER
+
+chmod +x ~/.openclaw/scripts/cron_scheduler.py
+```
 
 ### 2. Create an OpenClaw cron job
 
-In your OpenClaw job configuration, use the scheduler command:
+Use the wrapper command in your cron job:
 
 ```json
 {
   "name": "my_scheduled_task",
-  "cron": "0 */6 * * *",
+  "schedule": { "kind": "cron", "expr": "0 */6 * * *" },
+  "sessionTarget": "isolated",
   "payload": {
-    "message": "openclaw-scheduler run my_job 'python3 /path/to/your/script.py'"
+    "kind": "agentTurn",
+    "message": "运行命令: python3 ~/.openclaw/scripts/cron_scheduler.py my_job 'python3 /path/to/your/script.py'"
   }
 }
 ```
 
-### 3. Restart OpenClaw gateway
+### 3. (Optional) Configure SOUL.md for automatic scheduler usage
 
-```bash
-openclaw gateway restart
+Add this rule to your `~/.openclaw/workspace/SOUL.md` so that AI automatically uses the scheduler when creating new cron jobs:
+
+```markdown
+## Cron Task Scheduler Rule
+
+When creating cron jobs that run external commands, ALWAYS use the scheduler wrapper:
+
+```
+python3 ~/.openclaw/scripts/cron_scheduler.py <job_id> '<command>'
 ```
 
-Your task will now run through the scheduler, which handles queueing automatically when multiple tasks trigger simultaneously.
+Example:
+```
+运行命令: python3 ~/.openclaw/scripts/cron_scheduler.py data_sync 'python3 /scripts/sync.py'
+```
+
+This prevents rate limiting when multiple cron tasks trigger simultaneously.
+```
 
 ## Usage
 
@@ -145,9 +180,41 @@ openclaw-scheduler run \
 
 If you were previously using the old `cron_scheduler.py` script, you have two options:
 
-### Option 1: Update jobs.json (Recommended)
+### Option 1: Compatibility Wrapper (Recommended - Zero-Change)
 
-Update your OpenClaw job configuration to use the new CLI command:
+Create a wrapper script at `~/.openclaw/scripts/cron_scheduler.py` that calls the new scheduler:
+
+```bash
+mkdir -p ~/.openclaw/scripts
+cat > ~/.openclaw/scripts/cron_scheduler.py <<'WRAPPER'
+#!/usr/bin/env python3
+import sys
+import subprocess
+
+if len(sys.argv) < 3:
+    sys.exit(1)
+
+task_id = sys.argv[1]
+command = sys.argv[2]
+
+result = subprocess.run(
+    ["openclaw-scheduler", "run", task_id, command],
+    capture_output=True
+)
+sys.exit(result.returncode)
+WRAPPER
+
+chmod +x ~/.openclaw/scripts/cron_scheduler.py
+```
+
+**Benefits:**
+- No changes to existing `jobs.json` needed
+- Works with all existing cron jobs automatically
+- AI will continue creating jobs in the same format
+
+### Option 2: Direct CLI Usage (Manual Per-Job)
+
+Update each OpenClaw job configuration to use the new CLI command directly:
 
 **Before:**
 ```json
@@ -164,34 +231,7 @@ Then restart the gateway:
 openclaw gateway restart
 ```
 
-### Option 2: Compatibility Wrapper (Zero-Change)
-
-Create a wrapper script at `~/.openclaw/scripts/cron_scheduler.py` that calls the new scheduler:
-
-```python
-#!/usr/bin/env python3
-import sys
-import subprocess
-
-if len(sys.argv) < 3:
-    sys.exit(1)
-
-task_id = sys.argv[1]
-command = sys.argv[2]
-
-result = subprocess.run(
-    ["openclaw-scheduler", "run", task_id, command],
-    capture_output=True
-)
-sys.exit(result.returncode)
-```
-
-Make it executable:
-```bash
-chmod +x ~/.openclaw/scripts/cron_scheduler.py
-```
-
-No changes to `jobs.json` are needed with this approach.
+**Note:** This requires manually updating each existing job, and new jobs created by AI will NOT automatically use the scheduler unless you also configure SOUL.md (see Quick Start).
 
 ## How It Works
 
@@ -209,39 +249,16 @@ No changes to `jobs.json` are needed with this approach.
 
 ## Deployment Script
 
-For easy deployment on multiple servers:
+For easy deployment on multiple servers, use the provided script in `examples/install-scheduler.sh`. It:
+
+1. Installs the package from GitHub
+2. Initializes the scheduler configuration
+3. Creates the compatibility wrapper
+4. (Optional) Updates existing jobs.json
+5. (Optional) Restarts the gateway
 
 ```bash
-#!/bin/bash
-# install-scheduler.sh
-
-# Install the package from GitHub
-pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
-
-# Initialize configuration
-openclaw-scheduler init
-
-# Optional: Update jobs.json automatically
-python3 <<PYTHON
-import json
-import os
-jobs_file = os.path.expanduser('~/.openclaw/cron/jobs.json')
-with open(jobs_file, 'r') as f:
-    jobs = json.load(f)
-for job in jobs['jobs']:
-    if 'payload' in job and 'message' in job['payload']:
-        msg = job['payload']['message']
-        msg = msg.replace(
-            "python3 ~/.openclaw/scripts/cron_scheduler.py",
-            "openclaw-scheduler run"
-        )
-        job['payload']['message'] = msg
-with open(jobs_file, 'w') as f:
-    json.dump(jobs, f, indent=2)
-PYTHON
-
-# Restart OpenClaw
-openclaw gateway restart
+bash examples/install-scheduler.sh
 ```
 
 ## Development
