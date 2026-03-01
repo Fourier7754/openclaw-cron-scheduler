@@ -1,0 +1,28 @@
+# OpenClaw Cron Scheduler - Example Configuration
+# Copy this file to ~/.openclaw/scheduler.yaml or /etc/openclaw/scheduler.yaml
+
+scheduler:
+  # Directory for queue files and locks
+  queue_dir: ~/.openclaw/cron/queue
+
+  # Path to the log file
+  log_file: ~/.openclaw/logs/scheduler.log
+
+  # Minimum interval between task executions (seconds)
+  # This prevents rate limiting by spacing out API requests
+  task_interval: 3
+
+  # Maximum time a task can wait in queue (seconds)
+  # After this timeout, the task will force execution
+  queue_timeout: 600
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+
+  # Log format (Python logging format string)
+  format: "[%(asctime)s] %(message)s"
+
+# Advanced: Multiple environment configurations
+# You can use environment variable OPENCLAW_SCHEDULER_CONFIG
+# to point to different config files for dev/staging/prod
