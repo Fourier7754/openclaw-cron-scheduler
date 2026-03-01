@@ -66,7 +66,7 @@ class Scheduler:
             File handle for the lock.
         """
         self._ensure_directories()
-        lock = open(self.config.lock_file, 'w')
+        lock = open(self.config.lock_file, "w")
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         return lock
 
@@ -88,19 +88,20 @@ class Scheduler:
         """
         if self.config.queue_file.exists():
             try:
-                with open(self.config.queue_file, 'r') as f:
+                with open(self.config.queue_file, "r") as f:
                     data = json.load(f)
                     # Clean up expired tasks
                     now = time.time()
-                    data['tasks'] = [
-                        t for t in data.get('tasks', [])
-                        if now - t.get('enqueued_at', 0) < self.config.queue_timeout
+                    data["tasks"] = [
+                        t
+                        for t in data.get("tasks", [])
+                        if now - t.get("enqueued_at", 0) < self.config.queue_timeout
                     ]
                     return data
             except (json.JSONDecodeError, IOError) as e:
                 self.logger.error(f"Error loading queue: {e}, creating new queue")
-                return {'tasks': [], 'last_update': 0}
-        return {'tasks': [], 'last_update': 0}
+                return {"tasks": [], "last_update": 0}
+        return {"tasks": [], "last_update": 0}
 
     def _save_queue(self, data: Dict):
         """Save queue to disk.
@@ -108,7 +109,7 @@ class Scheduler:
         Args:
             data: Queue data to save.
         """
-        with open(self.config.queue_file, 'w') as f:
+        with open(self.config.queue_file, "w") as f:
             json.dump(data, f, indent=2)
 
     def _get_position_file(self, task_id: str) -> Path:
@@ -131,8 +132,8 @@ class Scheduler:
             status: Task status.
         """
         pos_file = self._get_position_file(task_id)
-        with open(pos_file, 'w') as f:
-            json.dump({'position': position, 'status': status}, f)
+        with open(pos_file, "w") as f:
+            json.dump({"position": position, "status": status}, f)
 
     def _read_position(self, task_id: str) -> Optional[Dict]:
         """Read task position information.
@@ -146,7 +147,7 @@ class Scheduler:
         pos_file = self._get_position_file(task_id)
         if pos_file.exists():
             try:
-                with open(pos_file, 'r') as f:
+                with open(pos_file, "r") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 return None
@@ -165,16 +166,18 @@ class Scheduler:
         lock = self._get_lock()
         try:
             data = self._load_queue()
-            position = len(data['tasks'])
-            data['tasks'].append({
-                'id': task_id,
-                'command': command,
-                'enqueued_at': time.time(),
-                'status': 'pending'
-            })
-            data['last_update'] = time.time()
+            position = len(data["tasks"])
+            data["tasks"].append(
+                {
+                    "id": task_id,
+                    "command": command,
+                    "enqueued_at": time.time(),
+                    "status": "pending",
+                }
+            )
+            data["last_update"] = time.time()
             self._save_queue(data)
-            self._write_position(task_id, position, 'pending')
+            self._write_position(task_id, position, "pending")
             self.logger.info(f"Task {task_id} enqueued at position {position}")
             return position
         finally:
@@ -192,8 +195,8 @@ class Scheduler:
         lock = self._get_lock()
         try:
             data = self._load_queue()
-            for i, task in enumerate(data['tasks']):
-                if task['id'] == task_id:
+            for i, task in enumerate(data["tasks"]):
+                if task["id"] == task_id:
                     return i
             return None
         finally:
@@ -215,7 +218,9 @@ class Scheduler:
             position = self.get_queue_position(task_id)
 
             if position is None:
-                self.logger.warning(f"Task {task_id} not found in queue, may have timed out")
+                self.logger.warning(
+                    f"Task {task_id} not found in queue, may have timed out"
+                )
                 return False
 
             if position == 0:
@@ -223,16 +228,16 @@ class Scheduler:
                 lock = self._get_lock()
                 try:
                     data = self._load_queue()
-                    for task in data['tasks']:
-                        if task['id'] == task_id:
-                            if task['status'] == 'pending':
+                    for task in data["tasks"]:
+                        if task["id"] == task_id:
+                            if task["status"] == "pending":
                                 # Can start executing
-                                task['status'] = 'running'
+                                task["status"] = "running"
                                 self._save_queue(data)
-                                self._write_position(task_id, 0, 'running')
+                                self._write_position(task_id, 0, "running")
                                 self.logger.info(f"Task {task_id} is now running")
                                 return True
-                            elif task['status'] == 'running':
+                            elif task["status"] == "running":
                                 # Already running (might be self)
                                 return True
                 finally:
@@ -245,7 +250,9 @@ class Scheduler:
 
             # Timeout check
             if time.time() - start_time > self.config.queue_timeout:
-                self.logger.warning(f"Task {task_id} timeout waiting, forcing execution")
+                self.logger.warning(
+                    f"Task {task_id} timeout waiting, forcing execution"
+                )
                 return True
 
             time.sleep(0.5)
@@ -259,13 +266,13 @@ class Scheduler:
         lock = self._get_lock()
         try:
             data = self._load_queue()
-            for i, task in enumerate(data['tasks']):
-                if task['id'] == task_id:
-                    task['status'] = 'done'
-                    task['finished_at'] = time.time()
+            for i, task in enumerate(data["tasks"]):
+                if task["id"] == task_id:
+                    task["status"] = "done"
+                    task["finished_at"] = time.time()
                     # Calculate wait time
                     wait_until = time.time() + self.config.task_interval
-                    task['next_start_at'] = wait_until
+                    task["next_start_at"] = wait_until
                     break
             self._save_queue(data)
 
@@ -289,9 +296,9 @@ class Scheduler:
             now: Current timestamp.
         """
         data = self._load_queue()
-        while data['tasks'] and data['tasks'][0]['status'] == 'done':
-            task = data['tasks'].pop(0)
-            next_start = task.get('next_start_at', 0)
+        while data["tasks"] and data["tasks"][0]["status"] == "done":
+            task = data["tasks"].pop(0)
+            next_start = task.get("next_start_at", 0)
             if next_start > now:
                 wait_time = next_start - now
                 self.logger.info(
@@ -361,7 +368,9 @@ class Scheduler:
         # Mark done
         self.mark_task_done(unique_id)
 
-        self.logger.info(f"=== Task {unique_id} completed with exit code {exit_code} ===")
+        self.logger.info(
+            f"=== Task {unique_id} completed with exit code {exit_code} ==="
+        )
         return exit_code
 
     def get_status(self) -> Dict:
@@ -374,16 +383,16 @@ class Scheduler:
         try:
             data = self._load_queue()
             return {
-                'queue_length': len(data['tasks']),
-                'tasks': [
+                "queue_length": len(data["tasks"]),
+                "tasks": [
                     {
-                        'id': t['id'],
-                        'status': t['status'],
-                        'enqueued_at': t['enqueued_at'],
+                        "id": t["id"],
+                        "status": t["status"],
+                        "enqueued_at": t["enqueued_at"],
                     }
-                    for t in data['tasks']
+                    for t in data["tasks"]
                 ],
-                'last_update': data.get('last_update', 0),
+                "last_update": data.get("last_update", 0),
             }
         finally:
             self._release_lock(lock)
@@ -392,13 +401,14 @@ class Scheduler:
         """Clear all tasks from the queue."""
         lock = self._get_lock()
         try:
-            self._save_queue({'tasks': [], 'last_update': time.time()})
+            self._save_queue({"tasks": [], "last_update": time.time()})
             self.logger.info("Queue cleared")
         finally:
             self._release_lock(lock)
 
 
 # Convenience functions for direct usage
+
 
 def init_directories(config: Optional[SchedulerConfig] = None) -> None:
     """Initialize scheduler directories.
@@ -410,7 +420,9 @@ def init_directories(config: Optional[SchedulerConfig] = None) -> None:
     scheduler._ensure_directories()
 
 
-def enqueue_task(task_id: str, command: str, config: Optional[SchedulerConfig] = None) -> int:
+def enqueue_task(
+    task_id: str, command: str, config: Optional[SchedulerConfig] = None
+) -> int:
     """Add a task to the queue.
 
     Args:
@@ -425,7 +437,9 @@ def enqueue_task(task_id: str, command: str, config: Optional[SchedulerConfig] =
     return scheduler.enqueue_task(task_id, command)
 
 
-def run_task(task_id: str, command: str, config: Optional[SchedulerConfig] = None) -> int:
+def run_task(
+    task_id: str, command: str, config: Optional[SchedulerConfig] = None
+) -> int:
     """Run a task with queue management.
 
     Args:

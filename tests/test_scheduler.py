@@ -139,14 +139,14 @@ class TestScheduler:
         lock = scheduler._get_lock()
         try:
             data = scheduler._load_queue()
-            data['tasks'][0]['status'] = 'done'
-            data['tasks'][0]['next_start_at'] = time.time() - 1  # Already passed
+            data["tasks"][0]["status"] = "done"
+            data["tasks"][0]["next_start_at"] = time.time() - 1  # Already passed
             scheduler._save_queue(data)
 
             scheduler._cleanup_done_tasks(time.time())
 
             data = scheduler._load_queue()
-            assert len(data['tasks']) == 0
+            assert len(data["tasks"]) == 0
         finally:
             scheduler._release_lock(lock)
 
@@ -200,8 +200,7 @@ class TestSchedulerIntegration:
 
         # Enqueue multiple tasks
         positions = [
-            scheduler.enqueue_task(f"task{i}", f"echo 'task {i}'")
-            for i in range(3)
+            scheduler.enqueue_task(f"task{i}", f"echo 'task {i}'") for i in range(3)
         ]
 
         assert positions == [0, 1, 2]

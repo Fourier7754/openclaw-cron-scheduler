@@ -13,8 +13,12 @@ class SchedulerConfig:
     """Configuration for the cron scheduler."""
 
     # Directory paths
-    queue_dir: Path = field(default_factory=lambda: Path.home() / ".openclaw" / "cron" / "queue")
-    log_file: Path = field(default_factory=lambda: Path.home() / ".openclaw" / "logs" / "scheduler.log")
+    queue_dir: Path = field(
+        default_factory=lambda: Path.home() / ".openclaw" / "cron" / "queue"
+    )
+    log_file: Path = field(
+        default_factory=lambda: Path.home() / ".openclaw" / "logs" / "scheduler.log"
+    )
 
     # Timing parameters
     task_interval: float = 3.0  # Seconds between tasks

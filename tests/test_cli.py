@@ -46,11 +46,16 @@ class TestCLI:
         """Test init command creates directories."""
         with runner.isolated_filesystem():
             # Use temporary directory for config
-            result = runner.invoke(cli, [
-                "--queue-dir", str(temp_config_dir / "queue"),
-                "--log-file", str(temp_config_dir / "logs" / "scheduler.log"),
-                "init"
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "--queue-dir",
+                    str(temp_config_dir / "queue"),
+                    "--log-file",
+                    str(temp_config_dir / "logs" / "scheduler.log"),
+                    "init",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "Initialization complete" in result.output
@@ -61,11 +66,18 @@ class TestCLI:
             log_file = temp_config_dir / "scheduler.log"
             queue_dir = temp_config_dir / "queue"
 
-            result = runner.invoke(cli, [
-                "--queue-dir", str(queue_dir),
-                "--log-file", str(log_file),
-                "run", "test_job", "echo 'hello'"
-            ])
+            result = runner.invoke(
+                cli,
+                [
+                    "--queue-dir",
+                    str(queue_dir),
+                    "--log-file",
+                    str(log_file),
+                    "run",
+                    "test_job",
+                    "echo 'hello'",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "Task test_job" in result.output
@@ -76,11 +88,10 @@ class TestCLI:
             queue_dir = temp_config_dir / "queue"
             log_file = temp_config_dir / "scheduler.log"
 
-            result = runner.invoke(cli, [
-                "--queue-dir", str(queue_dir),
-                "--log-file", str(log_file),
-                "status"
-            ])
+            result = runner.invoke(
+                cli,
+                ["--queue-dir", str(queue_dir), "--log-file", str(log_file), "status"],
+            )
 
             assert result.exit_code == 0
             assert "Queue length: 0" in result.output
@@ -92,18 +103,25 @@ class TestCLI:
             log_file = temp_config_dir / "scheduler.log"
 
             # Add a task first
-            runner.invoke(cli, [
-                "--queue-dir", str(queue_dir),
-                "--log-file", str(log_file),
-                "run", "test_job", "echo 'test'"
-            ])
+            runner.invoke(
+                cli,
+                [
+                    "--queue-dir",
+                    str(queue_dir),
+                    "--log-file",
+                    str(log_file),
+                    "run",
+                    "test_job",
+                    "echo 'test'",
+                ],
+            )
 
             # Clear with confirmation
-            result = runner.invoke(cli, [
-                "--queue-dir", str(queue_dir),
-                "--log-file", str(log_file),
-                "clear"
-            ], input="y\n")
+            result = runner.invoke(
+                cli,
+                ["--queue-dir", str(queue_dir), "--log-file", str(log_file), "clear"],
+                input="y\n",
+            )
 
             assert result.exit_code == 0
             assert "Queue cleared" in result.output
@@ -115,11 +133,16 @@ class TestCLI:
 
     def test_verbose_flag(self, runner, temp_config_dir):
         """Test verbose flag."""
-        result = runner.invoke(cli, [
-            "--verbose",
-            "--queue-dir", str(temp_config_dir / "queue"),
-            "--log-file", str(temp_config_dir / "scheduler.log"),
-            "status"
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "--verbose",
+                "--queue-dir",
+                str(temp_config_dir / "queue"),
+                "--log-file",
+                str(temp_config_dir / "scheduler.log"),
+                "status",
+            ],
+        )
 
         assert result.exit_code == 0

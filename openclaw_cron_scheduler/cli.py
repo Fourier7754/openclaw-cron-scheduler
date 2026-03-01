@@ -107,9 +107,9 @@ def status(ctx):
     click.echo(f"  Queue length: {status_info['queue_length']}")
     click.echo(f"  Last update: {status_info['last_update']}")
 
-    if status_info['tasks']:
+    if status_info["tasks"]:
         click.echo(f"\nTasks:")
-        for task in status_info['tasks']:
+        for task in status_info["tasks"]:
             click.echo(f"  - {task['id']}: {task['status']}")
 
 
