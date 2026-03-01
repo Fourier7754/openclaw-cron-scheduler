@@ -35,26 +35,30 @@ pip install -e .
 
 ## Quick Start
 
-### 1. Initialize the scheduler
+### 1. Install and initialize
 
 ```bash
+# Install from GitHub
+pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
+
+# Initialize the scheduler
 openclaw-scheduler init
 ```
 
 This creates the directory structure and default configuration at `~/.openclaw/scheduler.yaml`.
 
-### 2. Update your jobs.json
+### 2. Create an OpenClaw cron job
 
-Replace the command invocation in your OpenClaw job configuration:
+In your OpenClaw job configuration, use the scheduler command:
 
-**Before:**
 ```json
-"运行命令": "python3 ~/.openclaw/scripts/cron_scheduler.py JOB_ID 'python3 /path/to/script.py'"
-```
-
-**After:**
-```json
-"运行命令": "openclaw-scheduler run JOB_ID 'python3 /path/to/script.py'"
+{
+  "name": "my_scheduled_task",
+  "cron": "0 */6 * * *",
+  "payload": {
+    "message": "openclaw-scheduler run my_job 'python3 /path/to/your/script.py'"
+  }
+}
 ```
 
 ### 3. Restart OpenClaw gateway
@@ -62,6 +66,8 @@ Replace the command invocation in your OpenClaw job configuration:
 ```bash
 openclaw gateway restart
 ```
+
+Your task will now run through the scheduler, which handles queueing automatically when multiple tasks trigger simultaneously.
 
 ## Usage
 
@@ -135,9 +141,32 @@ openclaw-scheduler run \
   job123 "python3 script.py"
 ```
 
-## Zero-Change Migration (Optional)
+## Migration from Old Scheduler
 
-If you want to avoid modifying `jobs.json`, create a compatibility wrapper at `~/.openclaw/scripts/cron_scheduler.py`:
+If you were previously using the old `cron_scheduler.py` script, you have two options:
+
+### Option 1: Update jobs.json (Recommended)
+
+Update your OpenClaw job configuration to use the new CLI command:
+
+**Before:**
+```json
+"运行命令": "python3 ~/.openclaw/scripts/cron_scheduler.py JOB_ID 'python3 /path/to/script.py'"
+```
+
+**After:**
+```json
+"运行命令": "openclaw-scheduler run JOB_ID 'python3 /path/to/script.py'"
+```
+
+Then restart the gateway:
+```bash
+openclaw gateway restart
+```
+
+### Option 2: Compatibility Wrapper (Zero-Change)
+
+Create a wrapper script at `~/.openclaw/scripts/cron_scheduler.py` that calls the new scheduler:
 
 ```python
 #!/usr/bin/env python3
@@ -156,6 +185,13 @@ result = subprocess.run(
 )
 sys.exit(result.returncode)
 ```
+
+Make it executable:
+```bash
+chmod +x ~/.openclaw/scripts/cron_scheduler.py
+```
+
+No changes to `jobs.json` are needed with this approach.
 
 ## How It Works
 
