@@ -89,10 +89,17 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
     cat > "$WRAPPER_FILE" <<'WRAPPER'
 #!/usr/bin/env python3
+"""
+OpenClaw Cron Scheduler - Compatibility Wrapper
+
+This wrapper forwards all calls to the new openclaw-scheduler CLI package.
+Install the package: pip install git+https://github.com/Fourier7754/openclaw-cron-scheduler.git
+"""
 import sys
 import subprocess
 
 if len(sys.argv) < 3:
+    print("Usage: cron_scheduler.py <task_id> <command>", file=sys.stderr)
     sys.exit(1)
 
 task_id = sys.argv[1]
@@ -102,6 +109,13 @@ result = subprocess.run(
     ["openclaw-scheduler", "run", task_id, command],
     capture_output=True
 )
+
+# Output stdout/stderr from the scheduler (decode bytes to string)
+if result.stdout:
+    sys.stdout.write(result.stdout.decode('utf-8'))
+if result.stderr:
+    sys.stderr.write(result.stderr.decode('utf-8'))
+
 sys.exit(result.returncode)
 WRAPPER
 
