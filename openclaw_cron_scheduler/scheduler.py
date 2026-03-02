@@ -330,11 +330,15 @@ class Scheduler:
         if result.stdout:
             stdout = result.stdout.strip()
             if stdout:
-                self.logger.info(f"STDOUT: {stdout[:200]}")  # First 200 chars
+                # Print full output to stdout for agent to capture
+                print(stdout)
+                # Log first 200 chars to avoid bloating log file
+                self.logger.info(f"STDOUT: {stdout[:200]}...")
         if result.stderr:
             stderr = result.stderr.strip()
             if stderr:
-                self.logger.error(f"STDERR: {stderr[:200]}")
+                print(stderr, file=sys.stderr)
+                self.logger.error(f"STDERR: {stderr[:200]}...")
         self.logger.info(f"Exit code: {result.returncode}")
         return result.returncode
 
