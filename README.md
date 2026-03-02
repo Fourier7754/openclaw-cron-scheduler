@@ -83,7 +83,7 @@ Use the wrapper command in your cron job:
 }
 ```
 
-### 3. (Optional) Configure SOUL.md for automatic scheduler usage
+### 3. Configure SOUL.md for automatic scheduler usage
 
 Add this rule to your `~/.openclaw/workspace/SOUL.md` so that AI automatically uses the scheduler when creating new cron jobs:
 
